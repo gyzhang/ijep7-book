@@ -1,0 +1,34 @@
+{
+    "title": "iJEP7's Code Complete",
+    "description": "中电金信低代码应用开发平台设计开发指南",
+    "author": "Kevin Zhang",
+	"language": "zh-hans",
+	
+	"plugins": [ 
+		"-search",
+		"search-pro",
+		"code",
+		"splitter",
+		"expandable-chapters",
+		"page-toc-button",
+		"back-to-top-button",
+		"icp"
+	],
+	
+	"pluginsConfig": {
+		"search-pro": {
+			"cutWordLib": "nodejieba",
+			"defineWord": ["ijep"],
+			"expandable-chapters":{}
+		},
+		"icp": {
+        	"number": "蜀ICP备20013663号"
+        }
+	},
+	
+	"pdf": {
+		"paperSize": "a4",
+		"fontSize": 23		
+	}
+
+}
