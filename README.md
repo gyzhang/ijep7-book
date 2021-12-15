@@ -2,7 +2,7 @@
 
 命名
 
-iJEP = internet Java Enterprise Platform，面向互联网的 Java 企业（应用开发）平台，看起来应该是 JEADP
+iJEP = internet Java Enterprise Platform，面向互联网的 Java 企业开发平台，看起来应该是 JEDP
 
 缘起
 
