@@ -6,6 +6,10 @@
 
 * [第1章 微服务架构](准备篇/01-spring_cloud.md)
 * [第2章 分布式缓存](准备篇/02-redis.md)
+    * [2.1 Redis简介](准备篇/02.1-redis_overview.md) 
+    * [2.2 集成Redis](准备篇/02.2-redis_integration.md) 
+    * [2.3 Session共享](准备篇/02.3-redis_session.md) 
+    * [2.4 Redis集群](准备篇/02.4-redis_cluster.md) 
 * [第3章 搜索引擎](准备篇/03-elasticsearch.md)
 * [第4章 安装部署](准备篇/04-install.md)
 * [第5章 快速开始](准备篇/05-quickstart.md)
