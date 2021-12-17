@@ -149,6 +149,22 @@ set global sync_binlog = 1;
 5. 导入 ijep-db-init\demo\ijep7.structure.dev.create.sql，创建开发演示数据表；
 6. 导入 ijep-db-init\demo\ijep7.data.dev.sql，导入开发演示数据。
 
+参考的 MySQL 命令行语句：
+
+```bash
+mysql -uroot -p
+
+drop database ijep7;
+create database ijep7;
+use ijep7;
+
+source D:/Kevin/iJEP7/ijep-run-env/ijep7-db/flowable/flowable.mysql.all.create.sql;
+source D:/Kevin/iJEP7/ijep-run-env/ijep7-db/ijep7/ijep7.init.structure.create.sql;
+source D:/Kevin/iJEP7/ijep-run-env/ijep7-db/ijep7/ijep7.init.data.sql;
+source D:/Kevin/iJEP7/ijep-run-env/ijep7-db/demo/ijep7.structure.dev.create.sql;
+source D:/Kevin/iJEP7/ijep-run-env/ijep7-db/demo/ijep7.data.dev.sql;
+```
+
 ### 4.1.8 主机名映射
 
 在开发阶段，为了方便系统部署，我们并没有使用 Apollo 配置中心，而是在工程中使用 application-dev.yml 文件对database、consul、redis、elasticsearch等外部资源使用主机名的方式进行了配置，所以你需要在开发机上根据实际机器 ip 地址信息对主机名进行配置。
