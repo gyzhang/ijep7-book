@@ -115,7 +115,7 @@ innodb_flush_method=normal
 
 ### 4.1.7 导入数据
 
-由于初始数据脚本很大，使用 MySQL 命令行导入时会很慢。
+如果初始数据脚本很大，使用 MySQL 命令行导入时会很慢。
 
 通过修改 MySQL 的磁盘写入策略以及数据安全性的参数，来提高数据导入速度，导入完成后，再修改回安全的参数配置。
 
@@ -136,6 +136,19 @@ set global innodb_flush_log_at_trx_commit = 1;
 set global sync_binlog = 1;
 ```
 
+#### 4.1.7.1 创建开发数据库
+
+随开发试用环境分发的开发测试数据库是一个最小数据库，zip 后的大小为 52k。
+
+请按照如下顺序创建并导入初始开发数据库：
+
+1. 创建 ijep7 数据库；
+2. 导入 ijep-db-init\flowable\flowable.mysql.all.create.sql，创建 flowable 表结构；
+3. 导入 ijep-db-init\ijep7\ijep7.init.structure.create.sql，创建平台表结构；
+4. 导入 ijep-db-init\ijep7\ijep7.init.data.sql，导入平台初始数据；
+5. 导入 ijep-db-init\demo\ijep7.structure.dev.create.sql，创建开发演示数据表；
+6. 导入 ijep-db-init\demo\ijep7.data.dev.sql，导入开发演示数据。
+
 ### 4.1.8 主机名映射
 
 在开发阶段，为了方便系统部署，我们并没有使用 Apollo 配置中心，而是在工程中使用 application-dev.yml 文件对database、consul、redis、elasticsearch等外部资源使用主机名的方式进行了配置，所以你需要在开发机上根据实际机器 ip 地址信息对主机名进行配置。
@@ -154,7 +167,7 @@ set global sync_binlog = 1;
 
 ### 4.1.9 部署应用
 
-将 ijep-router-gateway.jar（API 网关）、ijep-service-sys-7.0.0-SNAPSHOT.jar（系统服务）、ijep-service-bpm-7.0.0-SNAPSHOT.jar（工作流引擎服务） 和 ijep-service-customer-7.0.0-SNAPSHOT.jar（开发演示服务） 拷贝到 `C:\Users\Kevin\iJEP7\run-env\ijep-jars` 目录下，完成后端服务的部署；
+将 ijep-router-gateway.jar（API 网关）、ijep-service-sys.jar（系统服务）、ijep-service-bpm.jar（工作流引擎服务） 和 ijep-service-customer.jar（开发演示服务） 拷贝到 `C:\Users\Kevin\iJEP7\run-env\ijep-jars` 目录下，完成后端服务的部署；
 
 将在 VS Code 中打包好的前端应用（如 .\app-ijep7-console\dist\）拷贝到 `C:\Users\Kevin\iJEP7\run-env\nginx-1.20.2\html` 目录下，完成前端应用的部署。
 
@@ -169,15 +182,15 @@ set global sync_binlog = 1;
 5. 启动后端应用服务：
 	打开命令行，依次启动网关、系统管理、工作流服务和开发测试（customer）服务
 	5.1 java -jar -Dfile.encoding=utf-8 ijep-router-gateway.jar
-	5.2 java -jar -Dfile.encoding=utf-8 ijep-service-sys-7.0.0-SNAPSHOT.jar
-	5.3 java -jar -Dfile.encoding=utf-8 ijep-service-bpm-7.0.0-SNAPSHOT.jar
-	5.4 java -jar -Dfile.encoding=utf-8 ijep-service-customer-7.0.0-SNAPSHOT.jar
+	5.2 java -jar -Dfile.encoding=utf-8 ijep-service-sys.jar
+	5.3 java -jar -Dfile.encoding=utf-8 ijep-service-bpm.jar
+	5.4 java -jar -Dfile.encoding=utf-8 ijep-service-customer.jar
 6. 启动部署了前端的 Nginx；
 7. 启动 Chrome，访问 [http://localhost](http://localhost) 
 
-为了方便演示，我们为 iJEP 7 配备了启动批处理文件 start_01.bat 和 start_02.bat，因为后台服务有依赖关系，所以需要先执行 start_01.bat 脚本，确保 sys 控制台启动完成后，才能执行 start_02.bat 脚本：
+为了方便演示，我们为 iJEP 7 配备了启动批处理文件 start-ijep7.bat 和 stop-nginx.bat：
 
-**start_01.bat：**
+**start-ijep7.bat：**
 
 ```powershell
 @echo off
@@ -188,9 +201,8 @@ start cmd /c "title consul && .\consul_1.10.4_windows_amd64\consul agent -dev"
 start cmd /c "title redis && .\Redis-x64-3.2.100\redis-server.exe"
 start cmd /c "title elasticsearch && .\elasticsearch-6.8.20\bin\elasticsearch.bat"
 
-rem 启动nginx之前先判断是否已经运行，如果运行了就先关掉
-set NGINX_PATH=C:
-set NGINX_DIR=C:\Users\Kevin\iJEP7\run-env\nginx-1.20.2\
+set NGINX_PATH=%~d0
+set NGINX_DIR=%~dp0nginx-1.20.2\
 set NGINX_NAME=nginx.exe
 set "PROCESS_LIST=tasklist /fi "imagename eq %NGINX_NAME%""
 for /f "tokens=2" %%i in ('%PROCESS_LIST% /nh') do (
@@ -203,21 +215,32 @@ if exist "%NGINX_DIR%%NGINX_NAME%" (
 )
 cd /d "%~dp0"
 
-WScript.sleep 10000
+:: 延迟10秒
+ping -n 10 127.0.0.1>nul
 
-start cmd /c "title gateway && java -jar -Dfile.encoding=utf-8 .\ijep-jars\ijep-router-gateway.jar"
-start cmd /c "title sys && java -jar -Dfile.encoding=utf-8 .\ijep-jars\ijep-service-sys-7.0.0-SNAPSHOT.jar"
+start cmd /c "title gateway && java -jar -Dfile.encoding=utf-8 .\ijep7-jars\ijep-router-gateway.jar"
+start cmd /c "title sys && java -jar -Dfile.encoding=utf-8 .\ijep7-jars\ijep-service-sys.jar"
+
+:: 延迟60秒后启动流程引擎，原因是流程引擎依赖sys服务
+ping -n 60 127.0.0.1>nul
+
+start cmd /c "title bpm && java -jar -Dfile.encoding=utf-8 .\ijep7-jars\ijep-service-bpm.jar"
+start cmd /c "title customer && java -jar -Dfile.encoding=utf-8 .\ijep7-jars\ijep-service-customer.jar"
 ```
 
-start_02.bat：
+**stop-nginx.bat：**
 
 ```powershell
-@echo off
 %1 mshta vbscript:CreateObject("Shell.Application").ShellExecute("cmd.exe","/c %~s0 ::","","runas",1)(window.close)&&exit
-cd /d "%~dp0"
 
-start cmd /c "title bpm && java -jar -Dfile.encoding=utf-8 .\ijep-jars\ijep-service-bpm-7.0.0-SNAPSHOT.jar"
-start cmd /c "title customer && java -jar -Dfile.encoding=utf-8 .\ijep-jars\ijep-service-customer-7.0.0-SNAPSHOT.jar"
+set NGINX_NAME=nginx.exe
+tasklist /fi "imagename eq %NGINX_NAME%"
+set "PROCESS_LIST=tasklist /fi "imagename eq %NGINX_NAME%""
+for /f "tokens=2" %%i in ('%PROCESS_LIST% /nh') do (
+  taskkill /f /pid %%i
+)
+
+pause
 ```
 
 打开 Chrome 浏览器，输入地址：[http://localhost/](http://localhost/)，使用如下账户登录系统测试“请假流程”：
