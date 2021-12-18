@@ -56,3 +56,4 @@
 * [附录1：数据库表](结束篇/appendix1-database.md)
 * [附录2：注解 ](结束篇/appendix2-annotation.md)
 * [附录3：自动配置](结束篇/appendix3-autoconfigure.md)
+* [附录4：从零开始搭建开发环境](结束篇/appendix4-launch.md)
