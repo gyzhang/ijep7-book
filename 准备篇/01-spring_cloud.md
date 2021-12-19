@@ -6,7 +6,7 @@
 
 阅读本文的小伙伴，应该都开发过单体应用，无论是传统的 Servlet + JSP，还是 SSM，还是现在的 SpringBoot，它们都是单体应用，那么长期陪伴我们的单体应用有什么弊端？我们是面临了什么问题，导致我们要抛弃单体应用转向微服务架构？比较容易发现的问题主要有以下几个：
 
-- 部署成本高（无论是修改1行代码，还是10行代码，都要全量替换）；
+- 部署成本高（无论是修改1行代码，还是 10 行代码，都要全量替换）；
 - 改动影响大，风险高（不论代码改动多小，成本都相同）；
 - 因为成本高，风险高，所以导致部署频率低（无法快速交付客户需求）。
 
@@ -32,7 +32,7 @@
 
 本指南剥离了业务场景，可做为最初始的 Spring Cloud 入门指导手册。
 
-目的是搭建一个最基础的微服务脚手架，然后将之前练习的 Spring Boot 单体应用（简单的电商购物场景）改写为微服务架构，从而体验单体架构和微服务分布式架构的区别。
+目的是从零开始搭建一个最基础的微服务脚手架，从而体验单体架构和微服务分布式架构的区别。
 
 ## 1.1 环境准备
 
@@ -50,30 +50,30 @@
 
 ![image-20201029091559027](images/image-20201029091559027.png)
 
-打开命令提示符窗口，进入`C:\Program Files\RabbitMQ Server\rabbitmq_server-3.8.9\sbin`目录，执行`rabbitmq-plugins.bat enable rabbitmq_management` 开启Web管理插件。
+打开命令提示符窗口，进入 `C:\Program Files\RabbitMQ Server\rabbitmq_server-3.8.9\sbin` 目录，执行 `rabbitmq-plugins.bat enable rabbitmq_management`  开启 Web 管理插件。
 
 ![image-20201029092003952](images/image-20201029092003952.png)
 
-打开浏览器访问[http://localhost:15672/](http://localhost:15672/)，使用guest用户，密码guest登录管理控制台，验证安装。
+打开浏览器访问 [http://localhost:15672/](http://localhost:15672/)，使用 guest 用户，密码 guest 登录管理控制台，验证安装。
 
 ![image-20201029092147883](images/image-20201029092147883.png)
 
 ### 1.1.2 安装 Redis
 
-在[https://github.com/microsoftarchive/redis/releases](https://github.com/microsoftarchive/redis/releases) 这里下载Windows预编译版本的Redis，为了简便起见，我们选择解压包文件。
+在 [https://github.com/microsoftarchive/redis/releases](https://github.com/microsoftarchive/redis/releases)  这里下载 Windows 预编译版本的 Redis，为了简便起见，我们选择解压包文件。
 
-安装测试文档，请参照[ Redis 简介](https://xprogrammer.net/wiki/1349284033200160/1349646836303552)。
+安装测试文档，请参照 [ Redis 简介](https://xprogrammer.net/wiki/1349284033200160/1349646836303552)。
 
 ![image-20191127202044621](images/image-20191127202044621.png)
 
-下载后，将其解压到用户目录中，例如`C:\Users\Kevin\Redis-x64-3.2.100`。
+下载后，将其解压到用户目录中，例如 `C:\Users\Kevin\Redis-x64-3.2.100`。
 
-双击`redis-server.exe`运行Redis服务器，可以看到Redis服务在6379端口上已经开放了。
+双击 `redis-server.exe` 运行 Redis 服务器，可以看到 Redis 服务在 6379 端口上已经开放了。
 ![image-20191127202555635](images/image-20191127202555635.png)
 
 ### 1.1.3 安装 Consul
 
-到[官网](https://www.consul.io/)下载 Windows 版本的 [Consul](https://releases.hashicorp.com/consul/1.8.5/consul_1.8.5_windows_amd64.zip)，解压 consul.exe 到指定的文件夹下。
+到 [官网](https://www.consul.io/) 下载 Windows 版本的 [Consul](https://releases.hashicorp.com/consul/1.8.5/consul_1.8.5_windows_amd64.zip)，解压 consul.exe 到指定的文件夹下。
 
 创建 startup.bat 文件，以单节点方式启动，内容为：
 
@@ -179,6 +179,8 @@ consul.exe agent -dev -ui -client 0.0.0.0
 ### 1.2.1 服务注册中心
 
 在 demo 项目中新建服务注册中心 eureka：
+
+> iJEP 7 的服务注册中心用的是 Consul，这里使用 eureka，只是为了你有另外一种体验，差别不大。
 
 ![image-20201029012620669](images/image-20201029012620669.png)
 
@@ -379,6 +381,8 @@ public class HelloController {
 
 在 demo 项目中新建网关 zuul 服务：
 
+> iJEP 7 的网关用的是 Gateway，这里使用 zuul，只是为了你有另外一种体验。
+
 ![image-20201029015033838](images/image-20201029015033838.png)
 
 选择依赖的组件：
@@ -479,17 +483,19 @@ public class MyTokenFilter extends ZuulFilter {
 }
 ```
 
-在启动服务注册中心、配置中心和会员服务的情况下，启动网关访问地址[http://localhost:9000/v5.25/api/member/hello?name=Kevin&token=Zhang](http://localhost:9000/v5.25/api/member/hello?name=Kevin&token=Zhang)，测试网关（端口9000）是否可以正常返回会员服务的测试接口：
+在启动服务注册中心、配置中心和会员服务的情况下，启动网关访问地址 [http://localhost:9000/v5.25/api/member/hello?name=Kevin&token=Zhang](http://localhost:9000/v5.25/api/member/hello?name=Kevin&token=Zhang)，测试网关（端口9000）是否可以正常返回会员服务的测试接口：
 
 ![image-20201029020525896](images/image-20201029020525896.png)
 
-访问不带token的地址[http://localhost:9000/v5.25/api/member/hello?name=Kevin](http://localhost:9000/v5.25/api/member/hello?name=Kevin)，测试网关中的过滤器是否正常工作：
+访问不带 token 的地址 [http://localhost:9000/v5.25/api/member/hello?name=Kevin](http://localhost:9000/v5.25/api/member/hello?name=Kevin)，测试网关中的过滤器是否正常工作：
 
 ![image-20201029020715315](images/image-20201029020715315.png)
 
 ### 1.2.5 应用控制台
 
 在 demo 项目中新建应用控制台 console 服务：
+
+> iJEP 7 是前后端分离的架构，前端应用控制台使用的是 vue，这里为了简化学习的目的，不引入更多技术栈，采用了普通 web 工程，使用 Thymeleaf 模板引擎。
 
 ![image-20201029015616040](images/image-20201029015616040.png)
 
@@ -627,7 +633,7 @@ public class HelloController {
 </html>
 ```
 
-在正确启动网关的情况下，访问地址[http://localhost:8080/hello?name=Roy&token=Zhang](http://localhost:8080/hello?name=Roy&token=Zhang)，测试应用控制台是否可以正常使用 Feign 访问网关的服务：
+在正确启动网关的情况下，访问地址 [http://localhost:8080/hello?name=Roy&token=Zhang](http://localhost:8080/hello?name=Roy&token=Zhang)，测试应用控制台是否可以正常使用 Feign 访问网关的服务：
 
 ![image-20201029021055848](images/image-20201029021055848.png)
 
@@ -648,7 +654,7 @@ public class HelloController {
 
 在会员（member）服务中添加 Redis 服务，以集成测试缓存 Redis。
 
-> 限制：本实验中使用 Windows 版本的单机 Redis 进行演示。使用 Redis 集群，请参考[Redis集群](https://xprogrammer.net/wiki/1349284033200160/1349646838399936)。
+> 限制：本实验中使用 Windows 版本的单机 Redis 进行演示。如果需要使用 Redis 集群，请参考 [Redis集群](https://xprogrammer.net/wiki/1349284033200160/1349646838399936)。
 
 在 pom.xml 文件中添加 Redis 依赖：
 
@@ -670,7 +676,7 @@ spring:
     password:
 ```
 
-添加 HelloService 类，使用`org.springframework.data.redis.core.StringRedisTemplate`模板操作 Redis：
+添加 HelloService 类，使用 `org.springframework.data.redis.core.StringRedisTemplate` 模板操作 Redis：
 
 ```java
 @Service
@@ -703,7 +709,7 @@ public class HelloController {
 }
 ```
 
-在 idea 的控制台中查看 HelloService.testRedis 方法输出的日志：
+在 IDEA 的控制台中查看 HelloService.testRedis 方法输出的日志：
 
 ```verilog
 2020-10-30 06:32:19.266  INFO 7152 --- [nio-7091-exec-3] com.example.member.service.HelloService  : Name in Redis=Roy
@@ -771,7 +777,7 @@ public void testRabbitMQ(String name){
 }
 ```
 
-创建消息消费者 RabbitMQConsumer 类，监听`kevin`消息队列的消息，并在管理控制台上输出接收到的消息：
+创建消息消费者 RabbitMQConsumer 类，监听 `kevin` 消息队列的消息，并在管理控制台上输出接收到的消息：
 
 ```java
 @Component
@@ -786,7 +792,7 @@ public class RabbitMQConsumer {
 }
 ```
 
-在 idea 的控制台中查看 HelloService 发送的消息和 RabbitMQConsumer 接受到的消息：
+在 IDEA 的控制台中查看 HelloService 发送的消息和 RabbitMQConsumer 接受到的消息：
 
 ```verilog
 2020-10-30 07:17:11.328  INFO 6160 --- [nio-7091-exec-2] com.example.member.service.HelloService  : Send Message: Kevin is a GOODMAN.
@@ -814,13 +820,13 @@ application.yml 和 bootstrap.yml 在同一目录下：bootstrap.yml 先加载 a
 
 bootstrap.yml 和 application.yml 都可以用来配置参数。
 
-bootstrap.yml 用来程序引导时执行，应用于更加早期配置信息读取。可以理解成系统级别的一些参数配置，这些参数一般是不会变动的。一旦bootStrap.yml 被加载，则内容不会被覆盖。
+bootstrap.yml 是在程序引导时执行，应用于更加早期配置信息读取。可以理解成系统级别的一些参数配置，这些参数一般是不会变动的。一旦bootstrap.yml 被加载，则内容不会被覆盖。
 
 application.yml 可以用来定义应用级别的， 应用程序特有配置信息，可以用来配置后续各个模块中需使用的公共参数等。
 
 **bootstrap.yml典型的应用场景**
 
-- 当使用 Spring Cloud Config Server 配置中心时，这时需要在 bootstrap.yml 配置文件中指定；spring.application.name 和 spring.cloud.config.server.git.uri，添加连接到配置中心的配置属性来加载外部配置中心的配置信息；
+- 当使用 Spring Cloud Config Server 配置中心时，这时需要在 bootstrap.yml 配置文件中指定 spring.application.name 和 spring.cloud.config.server.git.uri，添加连接到配置中心的配置属性来加载外部配置中心的配置信息；
 - 一些固定的不能被覆盖的属性；
 - 一些加密/解密的场景。
 
@@ -828,16 +834,14 @@ application.yml 可以用来定义应用级别的， 应用程序特有配置信
 
 在学习过程中，为了减少复杂性，我们使用了 Thymeleaf 模板技术，但是在实际的工作项目中，用得最多的是前后端分离架构体系。
 
-在前后端分离架构中，国内用得最多的当属 [vue](https://cn.vuejs.org/)，其[官方文档](https://cn.vuejs.org/v2/guide/)就相当完善。
+在前后端分离架构中，国内用得最多的当属 [vue](https://cn.vuejs.org/)，其 [官方文档](https://cn.vuejs.org/v2/guide/) 就相当完善。
 
-这里有一篇最最简单的[前后端入门](https://xprogrammer.net/article/1355071495340896)的文章，可以看一看。
+这里有一篇最最简单的 [前后端入门](https://xprogrammer.net/article/1355071495340896) 的文章，值得看一看。
 
-在 vue 技术生态中 [element](https://element.eleme.cn/#/zh-CN) 组件是应用较为广泛的，其 [element-admin](https://panjiachen.github.io/vue-element-admin-site/zh/)，可以快速作为管理类项目的起始脚手架项目。
+在 vue 技术生态中 [element](https://element.eleme.cn/#/zh-CN) 组件应用较为广泛，其 [element-admin](https://panjiachen.github.io/vue-element-admin-site/zh/)，可以快速作为管理类项目的起始脚手架项目。
 
 使用 element-admin 的开源项目 [pre-ui](https://github.com/LiHaodong888/pre-ui)（后台 Spring Boot 项目为 [pre](https://github.com/LiHaodong888/pre)）值得你认真学习。
 
 更进一步，其分布式版本开源项目 [prex](https://gitee.com/kaiyuantuandui/prex)，更是值得你认真学习的一个好项目。
-
-你认真学习的样子，真美。
 
 > 配套代码请移步这里：[https://github.com/gyzhang/SpringCloudCourseCode/tree/master/spring-cloud-quickstart/demo](https://github.com/gyzhang/SpringCloudCourseCode/tree/master/spring-cloud-quickstart/demo)

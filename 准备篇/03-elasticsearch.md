@@ -487,7 +487,7 @@ public class ESDataAuditServiceImpl implements DataAuditService{
 
 上述代码第 16 行，调用 ESClient 类的 insert 方法，将数据审计数据异步索引到 Elasticsearch 中。
 
-### 3.5.3 工作流
+### 3.5.3 流程引擎
 
 iJEP 7 平台的工作流服务，为了加快业务审批记录查找减轻引擎运行时压力，我们将流程实例的审批记录（历史数据）存放在 Elasticsearch 中。
 
