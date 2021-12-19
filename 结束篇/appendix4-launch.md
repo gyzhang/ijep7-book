@@ -19,7 +19,7 @@ iJEP 7 是典型的微服务架构，其开发环境依赖于较多的基础设�
 **iJEP7开发试用-20211218** 分发包说明：
 
 1. 7zip：开源好用免费的压缩解压缩软件；
-2. Book：iJEP Code Complete Uncomplete Version，部分章节；
+2. Book：iJEP 7 Code Complete Uncomplete Version，部分章节；
 3. IDEA：后端程序员撸代码神器；
 4. JDK：后端 Java 开发人员吃饭的家伙；
 5. Maven：标准构建工具，项目依赖管理工具；
@@ -46,7 +46,7 @@ iJEP 7 是典型的微服务架构，其开发环境依赖于较多的基础设�
 
 ![image-20211218104023195](images/image-20211218104023195.png)
 
-请将 JDK 安装到不带中文和/或空格的路径下，例如 C:\Java\jdk1.8.0_311，同时，选择不安装公共 JERE：
+请将 JDK 安装到不带中文和/或空格的路径下，例如 C:\Java\jdk1.8.0_311，同时，选择不安装公共 JRE：
 
 ![image-20211218104407805](images/image-20211218104407805.png)
 
