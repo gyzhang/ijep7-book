@@ -421,7 +421,7 @@ ll
 
 > iJEP 7 使用了 Elasticsearch 6 版本，不能下载安装 7 版本。
 
-下载 [elasticsearch-6.8.20.tar.gz](https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.8.20.tar.gz) 和 [elasticsearch-analysis-ik-6.8.20.zip](https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v6.8.20/elasticsearch-analysis-ik-6.8.20.zip)
+下载 [elasticsearch-6.8.20.tar.gz](https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.8.20.tar.gz) 和 [elasticsearch-analysis-ik-6.8.20.zip](https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v6.8.20/elasticsearch-analysis-ik-6.8.20.zip)，并解压到 `/opt/elasticsearch-6.8.20/` 目录。分词器解压位置为 `/opt/elasticsearch-6.8.20/plugins/ik/`。
 
 ES 不能使用 root 用户启动，添加 es用户和组：
 
