@@ -801,3 +801,399 @@ iJEP 7 WEB 前端在测试客户端（Windows 机器）上的浏览器（Chrome�
 一级部门经理：lisi 123456
 复核:  lengzw risk@2019
 ```
+
+## 4.3 安装 Oceanbase
+
+iJEP 7 在某西南省级农信联社需要使用 Oceanbase 分布式数据库，为了移植 iJEP 7 到 Oceanbase 数据库上，并做验证测试，所以提供本章节内容供给项目开发团队使用。
+
+本章节使用 VirtualBox 安装 CenetOS 7 的虚拟机环境来安装配置最小的 OceanBase 服务器，供开发环境使用。
+
+为了固定虚拟机内 IP 地址，采用了 Host-Only 网卡模式。
+
+为了在安装配置过程中访问公网下载安装资源，为 Host-Only 网卡共享了宿主机的无线网卡。
+
+> - 个人用户最低要求 2 核, 推荐 8 核及以上；
+> - 个人用户户最低要求 8G, 推荐 64G 及以上；
+> - 企业用户最低要求 16 核，推荐 32 核及以上；
+> - 企业用户最低要求 64G，推荐 256G 及以上；
+> - 如果您部署 OceanBase 集群，确保集群内的所有机器配置相同。
+
+### 4.3.1 配置 host-only 访问公网
+
+在宿主机（Windows 10）中，需要对 VirtualBox Host-Only 网卡设置 IP 地址和 DNS 地址：
+
+> 一定要设置固定的 DNS 地址，因为笔记本接入公网经常采用的是 DHCP 方式。
+
+![image-20211229002539211](images/image-20211229002539211.png)
+
+在宿主机（Windows 10）中，能上网的那张网卡（笔记本上，通常是那张无线网卡）中设置将 Internet 连接共享给 VirtualBox Host-Only 网卡：
+
+> 如果使用有线网卡，也同样设置即可。
+
+![image-20211229002722030](images/image-20211229002722030.png)
+
+检查**VirtualBox > 管理 > 主机网络管理器**的设置是否正确：
+
+![image-20211230073901265](images/image-20211230073901265.png)
+
+Linux 虚拟机中，检查网卡配置信息，网关和 DNS 都指向 192.168.137.1，宿主机中的 VirtualBox Host-Only 网卡里面的 DNS 设置会为虚拟机中的网卡做解析。
+
+```properties
+vi /etc/sysconfig/network-scripts/ifcfg-enp0s3
+# 网卡配置信息如下：
+TYPE=Ethernet
+PROXY_METHOD=none
+BROWSER_ONLY=no
+BOOTPROTO=none
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+IPV6INIT=no
+IPV6_AUTOCONF=yes
+IPV6_DEFROUTE=yes
+IPV6_FAILURE_FATAL=no
+IPV6_ADDR_GEN_MODE=stable-privacy
+NAME=enp0s3
+UUID=e6ad7b0f-92cf-4d1d-9b53-ee5fa75e1ae5
+DEVICE=enp0s3
+ONBOOT=yes
+IPADDR=192.168.137.200
+PREFIX=24
+GATEWAY=192.168.137.1
+DNS1=192.168.137.1
+```
+
+重启虚拟机后，ping 百度网站，可以检查网络是否通畅：
+
+```bash
+ping www.baidu.com
+64 bytes from 14.215.177.39 (14.215.177.39): icmp_seq=1 ttl=52 time=49.5 ms
+64 bytes from 14.215.177.39 (14.215.177.39): icmp_seq=2 ttl=52 time=74.4 ms
+64 bytes from 14.215.177.39 (14.215.177.39): icmp_seq=3 ttl=52 time=70.5 ms
+64 bytes from 14.215.177.39 (14.215.177.39): icmp_seq=4 ttl=52 time=62.4 ms
+64 bytes from 14.215.177.39 (14.215.177.39): icmp_seq=5 ttl=52 time=46.3 ms
+```
+
+### 4.3.2 安装 CentOS 虚拟机
+
+在 VirtualBox 中新建 Linux 虚拟机，挂接 CentOS 安装镜像。
+
+CentOS Linux 虚拟机（2C 16G）采用最小安装即可。 
+
+![image-20211230071815524](images/image-20211230071815524.png)
+
+为虚拟机设置固定 IP 地址为 192.168.137.200：
+
+![image-20211230072154995](images/image-20211230072154995.png)
+
+检查设置的 IP 地址信息：
+
+> 确保网关和 DNS 都是设置为 VirtualBox Host-Only 网卡的地址：192.168.137.1
+
+![image-20211230072328639](images/image-20211230072328639.png)
+
+安装 Linux 的过程中创建 admin 用户。
+
+安装完成重启后使用 root 用户登录，对 Linux 做相关设置。
+
+#### 4.3.2.1 关闭 SELINUX
+
+开发机器，为了方便，关闭 SELINUX。
+
+编辑 /etc/selinux/config 文件，关闭 SELINUX：
+
+```bash
+vi /etc/selinux/config
+# 修改的参数：
+SELINUX=disabled
+```
+
+#### 4.3.2.2 关闭防火墙
+
+开发机器，为了方便，关闭防火墙。
+
+执行如下命令，关闭防火墙：
+
+```bash
+systemctl disable firewalld.service
+```
+
+#### 4.3.2.3 修改 open files 数
+
+Linux 默认文件句柄数为 1024，远远不够用，修改成一个较大的值：
+
+```bash
+vi /etc/security/limits.conf
+# 修改的参数：
+* soft nofile 655360
+* hard nofile 655360
+```
+
+#### 4.3.2.4 修改 fs.aio-max-nr 参数
+
+在 Linux 中，fs.aio-max-nr 是个内核参数，指的是同时可以拥有的异步IO请求数目，Oceanbase 推荐的参数是 1024K，也就是 1048576：
+
+```bash
+vi /etc/sysctl.conf
+# 修改的参数：
+fs.aio-max-nr = 1048576
+```
+
+#### 4.3.2.5 关闭透明大页
+
+对于 CentOS 操作系统，需要运行以下命令，手动关闭透明大页：
+
+```bash
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+```
+
+### 4.3.3 安装 Oceanbase
+
+官方推荐使用 admin 用户登录安装 Oceanbase 数据库。
+
+#### 4.3.3.1 安装部署工具
+
+Oceanbase 官网 [quick start](https://open.oceanbase.com/quickStart) 是通过 [ob-deploy](https://mdn.alipayobjects.com/ob_portal/afts/file/A*vM1AQYaLHYIAAAAAAAAAAAAADmF2AQ?af_fileName=ob-deploy-1.1.2-1.el7.x86_64.rpm) 进行单机单节点安装部署的。
+
+这样的安装方式可以快速的安装 Oceanbase 开发环境。
+
+首选安装 [ob-deploy-1.1.2-1.el7.x86_64.rpm](https://mdn.alipayobjects.com/ob_portal/afts/file/A*vM1AQYaLHYIAAAAAAAAAAAAADmF2AQ?af_fileName=ob-deploy-1.1.2-1.el7.x86_64.rpm)，在 admin 用户登录时要 su 到 root 用户安装：
+
+```bash
+[admin@server ~]$ su
+Password:
+[root@server admin]# rpm -ivh ob-deploy-1.1.2-1.el7.x86_64.rpm
+warning: ob-deploy-1.1.2-1.el7.x86_64.rpm: Header V4 RSA/SHA1 Signature, key ID e9b4a7aa: NOKEY
+Preparing...                          ################################# [100%]
+Updating / installing...
+   1:ob-deploy-1.1.2-1.el7            ################################# [100%]
+Installation of obd finished successfully
+Please source /etc/profile.d/obd.sh to enable it
+```
+
+安装完成后，按照提示执行 `source /etc/profile.d/obd.sh` 命令，最后退出 su，回到 admin 用户。
+
+#### 4.3.3.2 安装 Oceanbase
+
+创建并编辑 config.yaml 配置文件，内容如下：
+
+> 一定要注意修改 memory_limit、system_memory 和 datafile_size 参数，否则小小的虚拟机没有那么多内存，根本启动不起来，[官方文档](https://www.oceanbase.com/docs/oceanbase-database/oceanbase-database/V3.2.1/what-is-oceanbase)没有提到这一点。
+
+```yaml
+user:
+  username: admin
+  password: gy@Zhang
+oceanbase-ce:
+  servers:
+  - 192.168.137.200
+  global:
+    home_path: /home/admin/observer/
+    devname: enp0s3
+    appname: obcluster
+  192.168.137.200:
+    syslog_level: INFO
+    enable_syslog_recycle: true
+    enable_syslog_wf: true
+    max_syslog_file_count: 4
+    memory_limit: 8G
+    system_memory: 4G
+    cpu_count: 4
+    datafile_size: 4G
+    clog_disk_utilization_threshold: 94
+    clog_disk_usage_limit_percentage: 98
+auto_create_tenant: true
+```
+
+> 上面 devname: enp0s3 是网卡的名称。
+
+连接公网，执行 `obd cluster autodeploy ijep7 -c config.yaml -A` 命令创建集群并启动：
+
+```bash
+[admin@server ~]$ obd cluster autodeploy ijep7 -c config.yaml -A
+Update OceanBase-community-stable-el7 ok
+Update OceanBase-development-kit-el7 ok
+Download oceanbase-ce-3.1.1-4.el7.x86_64.rpm (46.21 M):   0% [] ETA:  --:--:--
+...
+Download oceanbase-ce-3.1.1-4.el7.x86_64.rpm (46.21 M): 100% [] Time: 0:04:04 197.98 kB/s
+Package oceanbase-ce-3.1.1 is available.
+install oceanbase-ce-3.1.1 for local ok
+Cluster param config check ok
+Open ssh connection ok
+Generate observer configuration ok
+oceanbase-ce-3.1.1 already installed.
++-----------------------------------------------------------------------------+
+|                                   Packages                                  |
++--------------+---------+---------+------------------------------------------+
+| Repository   | Version | Release | Md5                                      |
++--------------+---------+---------+------------------------------------------+
+| oceanbase-ce | 3.1.1   | 4.el7   | f19f8bfb67723712175fb0dfd60579196b3168f1 |
++--------------+---------+---------+------------------------------------------+
+Repository integrity check ok
+Parameter check ok
+Open ssh connection ok
+Remote oceanbase-ce-3.1.1-f19f8bfb67723712175fb0dfd60579196b3168f1 repository i             nstall ok
+Remote oceanbase-ce-3.1.1-f19f8bfb67723712175fb0dfd60579196b3168f1 repository l             ib check !!
+[WARN] 192.168.137.200 oceanbase-ce-3.1.1-f19f8bfb67723712175fb0dfd60579196b316             8f1 require: libmariadb.so.3
+
+Try to get lib-repository
+Download oceanbase-ce-libs-3.1.1-4.el7.x86_64.rpm (155.15 K):   0% [] ETA:  --:       ...
+Download oceanbase-ce-libs-3.1.1-4.el7.x86_64.rpm (155.15 K): 100% [] Time: 0:00:00 261.89 kB/s
+Package oceanbase-ce-libs-3.1.1 is available.
+install oceanbase-ce-libs-3.1.1 for local ok
+Use oceanbase-ce-libs-3.1.1-58384f7ab4ee736e9d530f4bdd63c20ced0e7aba for oceanb             ase-ce-3.1.1-f19f8bfb67723712175fb0dfd60579196b3168f1
+Remote oceanbase-ce-libs-3.1.1-58384f7ab4ee736e9d530f4bdd63c20ced0e7aba reposit             ory install ok
+Remote oceanbase-ce-3.1.1-f19f8bfb67723712175fb0dfd60579196b3168f1 repository l             ib check ok
+Cluster status check ok
+Initializes observer work home ok
+ijep7 deployed
+Get local repositories and plugins ok
+Open ssh connection ok
+Cluster param config check ok
+Check before start observer ok
+[WARN] (192.168.137.200) clog and data use the same disk (/home)
+
+Start observer ok
+observer program health check ok
+Connect to observer ok
+Initialize cluster
+Cluster bootstrap ok
+Create tenant test ok
+Wait for observer init ok
++---------------------------------------------------+
+|                      observer                     |
++-----------------+---------+------+-------+--------+
+| ip              | version | port | zone  | status |
++-----------------+---------+------+-------+--------+
+| 192.168.137.200 | 3.1.1   | 2881 | zone1 | active |
++-----------------+---------+------+-------+--------+
+
+ijep7 running
+```
+
+执行 `obd cluster display ijep7` 命令查看集群启动状态：
+
+```bash
+[admin@server ~]$ obd cluster display ijep7
+Get local repositories and plugins ok
+Open ssh connection ok
+Cluster status check ok
+Connect to observer ok
+Wait for observer init ok
++---------------------------------------------------+
+|                      observer                     |
++-----------------+---------+------+-------+--------+
+| ip              | version | port | zone  | status |
++-----------------+---------+------+-------+--------+
+| 192.168.137.200 | 3.1.1   | 2881 | zone1 | active |
++-----------------+---------+------+-------+--------+
+```
+
+使用如下命令启动停止集群：
+
+```bash
+obd cluster start ijep7
+obd cluster stop ijep7
+```
+
+![image-20211229150059833](images/image-20211229150059833.png)
+
+#### 4.3.3.3 安装客户端
+
+到官网下载 [libobclient-2.0.0-2.el7.x86_64.rpm](https://mdn.alipayobjects.com/ob_portal/afts/file/A*UK3jRq1oVVYAAAAAAAAAAAAADmF2AQ?af_fileName=libobclient-2.0.0-2.el7.x86_64.rpm) 和 [obclient-2.0.0-2.el7.x86_64.rpm](https://mdn.alipayobjects.com/ob_portal/afts/file/A*fO_ZQbLQUZQAAAAAAAAAAAAADmF2AQ?af_fileName=obclient-2.0.0-2.el7.x86_64.rpm) 并 su 切换到 root 用户安装：
+
+```bash
+[admin@server ~]$ su
+Password:
+[root@server admin]# rpm -ivh libobclient-2.0.0-2.el7.x86_64.rpm
+warning: libobclient-2.0.0-2.el7.x86_64.rpm: Header V4 RSA/SHA1 Signature, key ID e9b4a7aa: NOKEY
+Preparing...                          ################################# [100%]
+Updating / installing...
+   1:libobclient-2.0.0-2.el7          ################################# [100%]
+[root@server admin]# rpm -ivh obclient-2.0.0-2.el7.x86_64.rpm
+warning: obclient-2.0.0-2.el7.x86_64.rpm: Header V4 RSA/SHA1 Signature, key ID e9b4a7aa: NOKEY
+Preparing...                          ################################# [100%]
+Updating / installing...
+   1:obclient-2.0.0-2.el7             ################################# [100%]
+[root@server admin]# exit
+exit
+[admin@server ~]$
+```
+
+#### 4.3.3.4 操作数据库
+
+使用 obclient 连接到数据库：
+
+```bash
+[admin@server ~]$ obclient -h192.168.137.200 -P2881 -uroot
+Welcome to the OceanBase.  Commands end with ; or \g.
+Your MySQL connection id is 3221488330
+Server version: 5.7.25 OceanBase 3.1.1 (r4-8c615943cbd25a6f7b8bdfd8677a13a21709a05e) (Built Oct 21 2021 10:33:14)
+
+Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MySQL [(none)]> show databases;
++--------------------+
+| Database           |
++--------------------+
+| oceanbase          |
+| information_schema |
+| mysql              |
+| SYS                |
+| LBACSYS            |
+| ORAAUDITOR         |
+| test               |
++--------------------+
+7 rows in set (0.003 sec)
+
+MySQL [(none)]> use oceanbase;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+MySQL [oceanbase]>
+```
+
+修改 root 用户的密码：
+
+```bash
+MySQL [oceanbase]> alter user root identified by '123456';
+Query OK, 0 rows affected (0.066 sec)
+
+MySQL [oceanbase]>
+```
+
+在宿主机（Windows 10）上，使用 MySQL 客户端，直接连接到 OceanBase，使用 MySQL 命令创建 ijep7 数据库，导入数据。
+
+```bash
+C:\Program Files\mysql-5.7.29-winx64\bin>mysql -h192.168.137.200 -P2881 -uroot -p
+Enter password: ******
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 3221488395
+Server version: 5.7.25 OceanBase 3.1.1 (r4-8c615943cbd25a6f7b8bdfd8677a13a21709a05e) (Built Oct 21 2021 10:33:14)
+
+Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> create database ijep7;
+Query OK, 1 row affected (0.05 sec)
+
+mysql> use ijep7;
+Database changed
+mysql> source d:/flowable.mysql.all.create.sql;
+mysql> source d:/ijep7.mysql.init.structure.sql;
+mysql> source d:/ijep7.mysql.init.data.sql;
+mysql> source d:/ijep7.mysql.dev.structure.sql;
+mysql> source d:/ijep7.mysql.dev.data.sql;
+mysql> exit
+Bye
+```
+
+使用 Navicat 以 MySQL 方式建立连接，进行数据管理：
+
+![image-20211230232804192](images/image-20211230232804192.png)
